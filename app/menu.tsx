@@ -2,9 +2,45 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; // Para los íconos,  ya  no los uso
+import { signOut } from 'firebase/auth';
+import { auth } from '../utils/FirebaseConfig';
+
+import { useEffect, useState } from "react";
+import { db } from "../utils/FirebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
+
+
 
 export default function MenuScreen() {
   const router = useRouter();
+
+
+  const [chatList, setChatList] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "chats"));
+        const data = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setChatList(data);
+      } catch (error) {
+        console.error("Error obteniendo chats:", error);
+      }
+    };
+
+    fetchChats();
+  }, []);
+
+
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.replace('/login');
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -18,11 +54,27 @@ export default function MenuScreen() {
 
       {/* Opciones del menú */}
       <ScrollView style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="chatbubble-outline" size={18} color="white" />
-          <Text style={styles.menuText}>New Chat</Text>
-          <Ionicons name="chevron-forward" size={18} color="white" />
+      <TouchableOpacity
+        style={styles.menuItem}
+        onPress={() => router.replace('/ChatScreen?newChat=true')}
+      >
+        <Ionicons name="chatbubble-outline" size={18} color="white" />
+        <Text style={styles.menuText}>New Chat</Text>
+        <Ionicons name="chevron-forward" size={18} color="white" />
+      </TouchableOpacity>
+
+      {chatList.map((chat) => (
+        <TouchableOpacity
+          key={chat.id}
+          style={styles.menuItem}
+          onPress={() => router.push(`/ChatScreen?id=${chat.id}`)}
+        >
+          <Ionicons name="chatbubbles-outline" size={18} color="white" />
+          <Text style={styles.menuText}>{chat.title || "Chat sin título"}</Text>
         </TouchableOpacity>
+      ))}
+
+
 
         <View style={styles.divider} />
 
@@ -49,10 +101,11 @@ export default function MenuScreen() {
           <Text style={styles.menuText}>Updates & FAQ</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.menuItem, styles.logout]}>
+        <TouchableOpacity style={[styles.menuItem, styles.logout]} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={18} color="#E63946" />
           <Text style={[styles.menuText, { color: '#E63946' }]}>Logout</Text>
         </TouchableOpacity>
+
       </ScrollView>
     </View>
   );

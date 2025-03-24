@@ -1,10 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getResponseFromGemini } from "../services/gemini";
 const Vector = require("../assets/images/Vector.png");
 import { Image } from "react-native";
+import { useLocalSearchParams } from 'expo-router';
+
+import { db } from "../utils/FirebaseConfig";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+
+
+
+
 
 
 
@@ -13,22 +22,90 @@ export default function ChatScreen() {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<{ role: "user" | "ai"; text: string }[]>([]);
 
+  const [chatId, setChatId] = useState<string | null>(null);
+  
+
+  const params = useLocalSearchParams();
+  const chatIdFromParams = params?.id as string | undefined;
+
+
+  useEffect(() => {
+    if (params?.newChat === "true") {
+      setChat([]);
+      setMessage("");
+  
+      // Limpiamos la URL para que no vuelva a detectar "newChat"
+      router.replace('/ChatScreen');
+    }
+  }, []);
+  
+  useEffect(() => {
+    const loadChat = async () => {
+      if (chatIdFromParams) {
+        try {
+          const docRef = doc(db, "chats", chatIdFromParams);
+          const docSnap = await getDoc(docRef);
+  
+          if (docSnap.exists()) {
+            const chatData = docSnap.data();
+            setChat(chatData.messages || []);
+            setChatId(docSnap.id);
+          } else {
+            console.log("Chat no encontrado");
+          }
+        } catch (error) {
+          console.error("Error cargando chat:", error);
+        }
+      }
+    };
+  
+    loadChat();
+  }, [chatIdFromParams]);
+  
+
+
   const sendMessage = async () => {
     if (!message.trim()) return;
 
     // Mensaje del usuario
     const userMessage: { role: "user"; text: string } = { role: "user", text: message };
-
     setChat((prevChat) => [...prevChat, userMessage]);
     setMessage("");
+
+    // Si es un nuevo chat, lo guardamos en Firestore
+    if (!chatId) {
+      try {
+        const docRef = await addDoc(collection(db, "chats"), {
+          title: `Chat ${new Date().getTime()}`, // por ahora usamos timestamp como nombre
+          create_at: Timestamp.now(),
+          messages: [userMessage],
+        });
+
+        setChatId(docRef.id); // Guardamos el ID para futuras actualizaciones
+      } catch (error) {
+        console.error("Error guardando el chat:", error);
+      }
+    }
+
 
     // Llamar a la API de Gemini
     const aiResponse = await getResponseFromGemini(message);
 
     if (aiResponse) {
       const aiMessage: { role: "ai"; text: string } = { role: "ai", text: aiResponse };
-
-      setChat((prevChat) => [...prevChat, aiMessage]);
+    
+      setChat((prevChat) => {
+        const updatedChat = [...prevChat, aiMessage];
+    
+        if (chatId) {
+          const chatRef = doc(db, "chats", chatId);
+          updateDoc(chatRef, { messages: updatedChat }).catch((error) =>
+            console.error("Error actualizando chat:", error)
+          );
+        }
+    
+        return updatedChat;
+      });
     }
   };
 

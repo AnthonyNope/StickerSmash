@@ -1,16 +1,19 @@
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+// app/index.tsx
+import { useRouter, useNavigationContainerRef } from 'expo-router';
+import { useEffect, useRef } from 'react';
 
 export default function Index() {
   const router = useRouter();
+  const hasRedirected = useRef(false);
 
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Pantalla Principal</Text>
-      <TouchableOpacity onPress={() => router.push('/welcome')} style={{ marginTop: 20, padding: 10, backgroundColor: 'blue' }}>
-        <Text style={{ color: 'white' }}>Screens</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  useEffect(() => {
+    if (!hasRedirected.current) {
+      hasRedirected.current = true;
+      setTimeout(() => {
+        router.replace('/login');
+      }, 0);
+    }
+  }, []);
+
+  return null;
 }
-
