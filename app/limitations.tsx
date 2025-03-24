@@ -17,7 +17,7 @@ export default function LimitationsScreen() {
       <Text style={styles.title}>Welcome to ChatGPT</Text>
       <Text style={styles.subtitle}>Ask anything, get your answer</Text>
 
-      <Image source={Triangulo} style={styles.Triangulo} />
+      <Image source={Triangulo} style={styles.Triangulo} tintColor="white" />
 
 
       <Text style={styles.sectionTitle}>Limitations</Text>
@@ -82,13 +82,16 @@ const styles = StyleSheet.create({
     color: '#A0A0A0',
     marginBottom: 20,
   },
+
   Triangulo: {
-    width: 25,  // Ajusta según el tamaño de la imagen
+    width: 25, // o lo que necesites
     height: 50,
-    marginBottom: 10, // Espacio entre el logo y el título
-    resizeMode: "contain", // Asegura que la imagen se ajuste correctamente
-    filter: "invert(1)", // Invierte los colores (negro a blanco)
+    marginBottom: 10,
+    tintColor: 'white',
+    resizeMode: 'contain',
+    alignSelf: 'center',
   },
+  
   
   warning: {
     fontSize: 24,

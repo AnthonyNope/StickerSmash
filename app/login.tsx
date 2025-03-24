@@ -34,6 +34,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Correo electrónico"
+        placeholderTextColor="gray"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -43,10 +44,12 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
+        placeholderTextColor="gray"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
+
 
       <TouchableOpacity style={styles.button} onPress={handleAuth}>
         <Text style={styles.buttonText}>{isRegistering ? 'Registrarse' : 'Entrar'}</Text>
